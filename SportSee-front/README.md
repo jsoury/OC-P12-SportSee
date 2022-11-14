@@ -6,7 +6,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 - ![Author](<https://img.shields.io/badge/Author-Jonathan SOURY-">)
 - ![GitHub repo size](https://img.shields.io/github/repo-size/jsoury/OC-P12-SportSee)
-- ![GitHub top language](https://img.shields.io/github/languages/top/jsoury/jsoury/OC-P12-SportSee)
+- ![GitHub top language](https://img.shields.io/github/languages/top/jsoury/OC-P12-SportSee)
 - ![GitHub language count](https://img.shields.io/github/languages/count/jsoury/OC-P12-SportSee)
 
 This repo contains all the source code to run the application of the sports analytics dashboard SportSee.
