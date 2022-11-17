@@ -94,7 +94,7 @@ import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { colors } from '@/asset/style/variables'
 
-//use mock
+//use data mock
 import {
   getUserById,
   getUserActivityById,
@@ -102,7 +102,7 @@ import {
   getUserPerformanceById,
 } from '../../services/user-service-mock/UserServiceMock'
 
-// user back
+//user back
 // import {
 //   getUserById,
 //   getUserActivityById,
@@ -137,6 +137,8 @@ const Information = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  max-height: 263px;
+  height: 100%;
 `
 const Report = styled.div`
   grid-area: report;
@@ -157,19 +159,32 @@ const Dashboard = () => {
   const [activity, setActivity] = useState(null)
   const [averageSessions, setAverageSessions] = useState(null)
   const [performance, setPerformance] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isError, setIsError] = useState(false)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    async function fetchData() {
-      await getDataUser(id)
-      await getActivityData(id)
-      await getSessionData(id)
-      await getPerformanceData(id)
-      await setIsLoading(false)
-      //await console.log(isLoading)
+    const fetchData = async () => {
+      setIsLoading(true)
+      setIsError(false)
+      try {
+        const dataUser = await getDataUser(id)
+        setUser(dataUser.getName())
+        setDataCard(dataUser.getDataCard())
+        setUserScore(dataUser.getScore())
+        const dataActivity = await getActivityData(id)
+        setActivity(dataActivity)
+        const dataSession = await getSessionData(id)
+        setAverageSessions(dataSession)
+        const dataPerformance = await getPerformanceData(id)
+        setPerformance(dataPerformance)
+      } catch (error) {
+        setIsError(true)
+      }
+      setIsLoading(false)
     }
     fetchData()
-  }, [id, isLoading])
+  }, [id])
 
   /**
    * @memberof Dashboard
@@ -177,12 +192,13 @@ const Dashboard = () => {
    * @param {number} id user id in path
    */
   const getDataUser = (id) => {
-    getUserById(id).then((response) => {
-      const userModelFormatted = new UserModel(response.data)
-      setUser(userModelFormatted.getName())
-      setDataCard(userModelFormatted.getDataCard())
-      setUserScore(userModelFormatted.getScore())
-    })
+    return getUserById(id)
+      .then((response) => {
+        return new UserModel(response.data)
+      })
+      .catch((error) => {
+        setError(error)
+      })
   }
 
   /**
@@ -191,11 +207,15 @@ const Dashboard = () => {
    * @param {number} id user id in path
    */
   const getActivityData = (id) => {
-    getUserActivityById(id).then((response) => {
-      const activityDataFormatted = new ActivityModel(response.data.sessions)
-      activityDataFormatted.transformDateToDay()
-      setActivity(activityDataFormatted.data)
-    })
+    return getUserActivityById(id)
+      .then((response) => {
+        const activityDataFormatted = new ActivityModel(response.data.sessions)
+        activityDataFormatted.transformDateToDay()
+        return activityDataFormatted.data
+      })
+      .catch((error) => {
+        setError(error)
+      })
   }
 
   /**
@@ -204,11 +224,15 @@ const Dashboard = () => {
    * @param {number} id user id in path
    */
   const getSessionData = (id) => {
-    getUserAverageSessionById(id).then((response) => {
-      const sessionsDataFormatted = new SessionsModel(response.data.sessions)
-      sessionsDataFormatted.turnDayToLetter()
-      setAverageSessions(sessionsDataFormatted.data)
-    })
+    return getUserAverageSessionById(id)
+      .then((response) => {
+        const sessionsDataFormatted = new SessionsModel(response.data.sessions)
+        sessionsDataFormatted.turnDayToLetter()
+        return sessionsDataFormatted.data
+      })
+      .catch((error) => {
+        setError(error)
+      })
   }
 
   /**
@@ -217,42 +241,51 @@ const Dashboard = () => {
    * @param {number} id user id in path
    */
   const getPerformanceData = (id) => {
-    getUserPerformanceById(id).then((response) => {
-      const performanceDataFormatted = new PerformanceModel(response.data.data)
-      performanceDataFormatted.turnPerformanceToLetter()
-      setPerformance(performanceDataFormatted.data)
-    })
+    return getUserPerformanceById(id)
+      .then((response) => {
+        const performanceDataFormatted = new PerformanceModel(response.data.data)
+        performanceDataFormatted.turnPerformanceToLetter()
+        return performanceDataFormatted.data
+      })
+      .catch((error) => {
+        setError(error)
+      })
   }
-
+  // if (isError) return &lt;div>Somentinh went rong... {isError}&lt;/div>
+  // if (isLoading) return &lt;div>Loading...&lt;/div>
   return (
     &lt;>
-      {!user &amp;&amp; !activity ? (
-        &lt;p>is loading&lt;/p>
+      {isError ? (
+        &lt;div>Somentinh went rong... {error.message}&lt;/div>
+      ) : isLoading ? (
+        &lt;div>Loading...&lt;/div>
       ) : (
-        &lt;>
-          &lt;h1>
-            Bonjour &lt;SpanName>{user}&lt;/SpanName>
-          &lt;/h1>
-          &lt;DashboardWrapper>
-            &lt;Information>
-              {dataCard.map((value, index) => (
-                &lt;Card
-                  key={`${value.description}${index}`}
-                  icon={value.icon}
-                  value={value.value}
-                  unit={value.unit}
-                  smallText={value.description}
-                >&lt;/Card>
-              ))}
-            &lt;/Information>
-            &lt;Activity activity={activity} />
-            &lt;Report>
-              &lt;Sessions averageSessions={averageSessions} />
-              &lt;Performance performance={performance} />
-              &lt;Score userScore={userScore} />
-            &lt;/Report>
-          &lt;/DashboardWrapper>
-        &lt;/>
+        user &amp;&amp; (
+          &lt;>
+            &lt;h1>
+              Bonjour &lt;SpanName>{user}&lt;/SpanName>
+            &lt;/h1>
+            &lt;DashboardWrapper>
+              &lt;Information>
+                {dataCard.map((value, index) => (
+                  &lt;Card
+                    key={`${value.description}${index}`}
+                    icon={value.icon}
+                    value={value.value}
+                    unit={value.unit}
+                    smallText={value.description}
+                  >&lt;/Card>
+                ))}
+              &lt;/Information>
+              &lt;Activity activity={activity} />
+              &lt;Report>
+                &lt;Sessions averageSessions={averageSessions} />
+                &lt;Performance performance={performance} />
+                &lt;Score userScore={userScore &amp;&amp; userScore} />
+              &lt;/Report>
+            &lt;/DashboardWrapper>
+          &lt;/>
+        )
       )}
     &lt;/>
   )

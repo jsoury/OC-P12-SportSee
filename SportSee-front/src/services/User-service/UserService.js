@@ -4,13 +4,8 @@
  */
 
 const httpGet = async (endpoint) => {
-  try {
-    const response = await fetch(endpoint)
-    return await response.json()
-  } catch (error) {
-    console.log(error)
-    throw Error(error)
-  }
+  const response = await fetch(endpoint)
+  return response.json()
 }
 
 /**

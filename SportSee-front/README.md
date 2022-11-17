@@ -16,12 +16,16 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 This repo contains all the source code to run the application of the sports analytics dashboard SportSee.
 
-### 2.1 Prerequisites
+### 2.1 Recommanded IDE
+
+- [Visual Studio code](https://code.visualstudio.com/)
+
+### 2.2 Prerequisites
 
 - [NodeJS (**version > 16**)](https://nodejs.org/en/)
 - [Yarn](https://yarnpkg.com/)
 
-### 2.2 Launching the project
+### 2.3 Launching the project
 
 - Clone this repo on your computer:
 

@@ -11,7 +11,7 @@ import {
   getUserPerformanceById,
 } from '../../services/user-service-mock/UserServiceMock'
 
-// user back
+//user back
 // import {
 //   getUserById,
 //   getUserActivityById,
@@ -68,19 +68,32 @@ const Dashboard = () => {
   const [activity, setActivity] = useState(null)
   const [averageSessions, setAverageSessions] = useState(null)
   const [performance, setPerformance] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isError, setIsError] = useState(false)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    async function fetchData() {
-      await getDataUser(id)
-      await getActivityData(id)
-      await getSessionData(id)
-      await getPerformanceData(id)
-      await setIsLoading(false)
-      //await console.log(isLoading)
+    const fetchData = async () => {
+      setIsLoading(true)
+      setIsError(false)
+      try {
+        const dataUser = await getDataUser(id)
+        setUser(dataUser.getName())
+        setDataCard(dataUser.getDataCard())
+        setUserScore(dataUser.getScore())
+        const dataActivity = await getActivityData(id)
+        setActivity(dataActivity)
+        const dataSession = await getSessionData(id)
+        setAverageSessions(dataSession)
+        const dataPerformance = await getPerformanceData(id)
+        setPerformance(dataPerformance)
+      } catch (error) {
+        setIsError(true)
+      }
+      setIsLoading(false)
     }
     fetchData()
-  }, [id, isLoading])
+  }, [id])
 
   /**
    * @memberof Dashboard
@@ -88,12 +101,13 @@ const Dashboard = () => {
    * @param {number} id user id in path
    */
   const getDataUser = (id) => {
-    getUserById(id).then((response) => {
-      const userModelFormatted = new UserModel(response.data)
-      setUser(userModelFormatted.getName())
-      setDataCard(userModelFormatted.getDataCard())
-      setUserScore(userModelFormatted.getScore())
-    })
+    return getUserById(id)
+      .then((response) => {
+        return new UserModel(response.data)
+      })
+      .catch((error) => {
+        setError(error)
+      })
   }
 
   /**
@@ -102,11 +116,15 @@ const Dashboard = () => {
    * @param {number} id user id in path
    */
   const getActivityData = (id) => {
-    getUserActivityById(id).then((response) => {
-      const activityDataFormatted = new ActivityModel(response.data.sessions)
-      activityDataFormatted.transformDateToDay()
-      setActivity(activityDataFormatted.data)
-    })
+    return getUserActivityById(id)
+      .then((response) => {
+        const activityDataFormatted = new ActivityModel(response.data.sessions)
+        activityDataFormatted.transformDateToDay()
+        return activityDataFormatted.data
+      })
+      .catch((error) => {
+        setError(error)
+      })
   }
 
   /**
@@ -115,11 +133,15 @@ const Dashboard = () => {
    * @param {number} id user id in path
    */
   const getSessionData = (id) => {
-    getUserAverageSessionById(id).then((response) => {
-      const sessionsDataFormatted = new SessionsModel(response.data.sessions)
-      sessionsDataFormatted.turnDayToLetter()
-      setAverageSessions(sessionsDataFormatted.data)
-    })
+    return getUserAverageSessionById(id)
+      .then((response) => {
+        const sessionsDataFormatted = new SessionsModel(response.data.sessions)
+        sessionsDataFormatted.turnDayToLetter()
+        return sessionsDataFormatted.data
+      })
+      .catch((error) => {
+        setError(error)
+      })
   }
 
   /**
@@ -128,42 +150,51 @@ const Dashboard = () => {
    * @param {number} id user id in path
    */
   const getPerformanceData = (id) => {
-    getUserPerformanceById(id).then((response) => {
-      const performanceDataFormatted = new PerformanceModel(response.data.data)
-      performanceDataFormatted.turnPerformanceToLetter()
-      setPerformance(performanceDataFormatted.data)
-    })
+    return getUserPerformanceById(id)
+      .then((response) => {
+        const performanceDataFormatted = new PerformanceModel(response.data.data)
+        performanceDataFormatted.turnPerformanceToLetter()
+        return performanceDataFormatted.data
+      })
+      .catch((error) => {
+        setError(error)
+      })
   }
-
+  // if (isError) return <div>Somentinh went rong... {isError}</div>
+  // if (isLoading) return <div>Loading...</div>
   return (
     <>
-      {!user && !activity ? (
-        <p>is loading</p>
+      {isError ? (
+        <div>Somentinh went rong... {error.message}</div>
+      ) : isLoading ? (
+        <div>Loading...</div>
       ) : (
-        <>
-          <h1>
-            Bonjour <SpanName>{user}</SpanName>
-          </h1>
-          <DashboardWrapper>
-            <Information>
-              {dataCard.map((value, index) => (
-                <Card
-                  key={`${value.description}${index}`}
-                  icon={value.icon}
-                  value={value.value}
-                  unit={value.unit}
-                  smallText={value.description}
-                ></Card>
-              ))}
-            </Information>
-            <Activity activity={activity} />
-            <Report>
-              <Sessions averageSessions={averageSessions} />
-              <Performance performance={performance} />
-              <Score userScore={userScore} />
-            </Report>
-          </DashboardWrapper>
-        </>
+        user && (
+          <>
+            <h1>
+              Bonjour <SpanName>{user}</SpanName>
+            </h1>
+            <DashboardWrapper>
+              <Information>
+                {dataCard.map((value, index) => (
+                  <Card
+                    key={`${value.description}${index}`}
+                    icon={value.icon}
+                    value={value.value}
+                    unit={value.unit}
+                    smallText={value.description}
+                  ></Card>
+                ))}
+              </Information>
+              <Activity activity={activity} />
+              <Report>
+                <Sessions averageSessions={averageSessions} />
+                <Performance performance={performance} />
+                <Score userScore={userScore && userScore} />
+              </Report>
+            </DashboardWrapper>
+          </>
+        )
       )}
     </>
   )
